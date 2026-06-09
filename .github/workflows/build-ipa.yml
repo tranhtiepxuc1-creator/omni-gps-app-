@@ -13,43 +13,13 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # CẬP NHẬT CHÍ MẠNG: Khai báo nạp trực tiếp Framework hệ thống UIKit cho dự án Xcode ảo
-    - name: Generate Xcode Project Struct
+    # DÙNG CÔNG CỤ TỰ ĐỘNG: Cài xcodegen và ép tự tạo file dự án Xcode chuẩn 100%
+    - name: Generate Xcode Project using XcodeGen
       run: |
-        mkdir -p OmniGPS.xcodeproj
-        cat << 'EOF' > OmniGPS.xcodeproj/project.pbxproj
-        // !$*UTF8*$!
-        {
-            archiveVersion = 1;
-            classes = {};
-            objectVersion = 56;
-            objects = {
-                100101 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 200101 /* main.m */; };
-                100102 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 200102 /* AppDelegate.m */; };
-                100103 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 200103 /* ViewController.m */; };
-                200101 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-                200102 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-                200103 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
-                200104 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
-                300101 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-                400101 /* CustomGroup */ = {isa = PBXGroup; children = (200101 /* main.m */, 200102 /* AppDelegate.m */, 200103 /* ViewController.m */, 200104 /* Info.plist */); sourceTree = "<group>"; };
-                500101 /* OmniGPS */ = {isa = PBXNativeTarget; buildConfigurationList = 600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */; buildPhases = (700101 /* Sources */, 300101 /* Frameworks */); buildRules = (); dependencies = (); name = OmniGPS; productName = OmniGPS; productReference = 800101 /* OmniGPS.app */; productType = "com.apple.product-type.application"; };
-                900101 /* Project object */ = {isa = PBXProject; attributes = {LastUpgradeCheck = 1500; }; buildConfigurationList = 600102 /* Build configuration list for PBXProject "OmniGPS" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 400101 /* CustomGroup */; productRefGroup = 400101 /* CustomGroup */; projectDirPath = ""; projectRoot = ""; targets = (500101 /* OmniGPS */); };
-                700101 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (100101 /* main.m in Sources */, 100102 /* AppDelegate.m in Sources */, 100103 /* ViewController.m in Sources */); runOnlyForDeploymentPostprocessing = 0; };
-                
-                # SỬA LỖI LINKER ĐỒ HỌA: Ép Xcode nhận diện thư viện đồ họa hệ thống khi biên dịch bản Release
-                600103 /* Debug Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; OTHER_LDFLAGS = "-framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation"; }; name = Debug; };
-                600104 /* Release Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; OTHER_LDFLAGS = "-framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation"; }; name = Release; };
-                
-                600105 /* Debug Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Debug; };
-                600106 /* Release Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Release; };
-                600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */ = {isa = XCConfigurationList; buildConfigurations = (600103 /* Debug Target */, 600104 /* Release Target */); defaultConfigurationName = Release; defaultConfigurationIsVisible = 0; };
-                600102 /* Build configuration list for PBXProject "OmniGPS" */ = {isa = XCConfigurationList; buildConfigurations = (600105 /* Debug Project */, 600106 /* Release Project */); defaultConfigurationName = Release; defaultConfigurationIsVisible = 0; };
-            };
-            rootObject = 900101 /* Project object */;
-        }
-        EOF
+        brew install xcodegen
+        xcodegen generate
 
+    # Tiến hành Archive bằng Xcode chính chủ
     - name: Build and Archive App via Xcode
       run: |
         xcodebuild archive \
@@ -61,6 +31,7 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
 
+    # Inject đặc quyền hệ thống cho TrollStore và đóng gói .ipa
     - name: Inject TrollStore Entitlements & Package IPA
       run: |
         mkdir -p Payload
