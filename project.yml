@@ -19,3 +19,14 @@ targets:
         DONT_CODE_SIGN: YES
         INFOPLIST_FILE: Resources/Info.plist
         OTHER_LDFLAGS: -framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
+        
+        # 🚀 TUYỆT CHIÊU MỞ KHÓA: Ép app mở quyền mở và đọc TẤT CẢ các loại định dạng file trên iPhone (Chống block file gpx)
+        INFOPLIST_KEY_CFBundleDocumentTypes:
+          - CFBundleTypeName: "All Files"
+            LSHandlerRank: "Owner"
+            LSItemContentTypes:
+              - "public.data"
+              - "public.item"
+              - "public.content"
+              - "public.xml"
