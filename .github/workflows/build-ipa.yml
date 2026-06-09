@@ -1,4 +1,4 @@
-name: Build TrollStore GPS IPA
+name: Build TrollStore GPS via Xcodebuild
 
 on:
   push:
@@ -13,39 +13,141 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Theos Environment
+    # 🚀 TUYỆT CHIÊU 1: Tạo file cấu hình Xcode Project (.xcodeproj) ảo trực tiếp bằng script cực nhanh
+    - name: Generate Xcode Project Struct
       run: |
-        git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
-        echo "THEOS=/Users/runner/theos" >> $GITHUB_ENV
+        mkdir -p OmniGPS.xcodeproj
+        cat << 'EOF' > OmniGPS.xcodeproj/project.pbxproj
+        // !$*UTF8*$!
+        {
+            archiveVersion = 1;
+            classes = {};
+            objectVersion = 56;
+            objects = {
+                /* Begin PBXBuildFile */
+                100101 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 200101 /* main.m */; };
+                100102 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 200102 /* AppDelegate.m */; };
+                100103 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 200103 /* ViewController.m */; };
+                /* End PBXBuildFile */
 
-    # FIX CHÍ MẠNG LẦN CUỐI: Tải ldid chuẩn từ Procursus chính chủ cho macOS arm64
-    - name: Setup ldid Code Sign Tool
-      run: |
-        mkdir -p /Users/runner/theos/bin
-        curl -L "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macos_arm64" -o /Users/runner/theos/bin/ldid
-        chmod +x /Users/runner/theos/bin/ldid
-        echo "/Users/runner/theos/bin" >> $GITHUB_PATH
+                /* Begin PBXFileReference */
+                200101 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+                200102 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+                200103 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+                200104 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
+                /* End PBXFileReference */
 
-    - name: Download iOS SDK
-      run: |
-        mkdir -p /Users/runner/theos/sdks
-        curl -L "https://codeload.github.com/theos/sdks/zip/refs/heads/master" -o sdks.zip
-        unzip -q sdks.zip -d /Users/runner/work/
-        cp -r /Users/runner/work/sdks-master/iPhoneOS16.5.sdk /Users/runner/theos/sdks/
-        rm -rf sdks.zip /Users/runner/work/sdks-master
+                /* Begin PBXFrameworksBuildPhase */
+                300101 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+                /* End PBXFrameworksBuildPhase */
 
-    - name: Compile Application to IPA
+                /* Begin PBXGroup */
+                400101 /* CustomGroup */ = {
+                    isa = PBXGroup;
+                    children = (200101 /* main.m */, 200102 /* AppDelegate.m */, 200103 /* ViewController.m */, 200104 /* Info.plist */);
+                    sourceTree = "<group>";
+                };
+                /* End PBXGroup */
+
+                /* Begin PBXNativeTarget */
+                500101 /* OmniGPS */ = {
+                    isa = PBXNativeTarget;
+                    buildConfigurationList = 600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */;
+                    buildPhases = (700101 /* Sources */, 300101 /* Frameworks */);
+                    buildRules = ();
+                    dependencies = ();
+                    name = OmniGPS;
+                    productName = OmniGPS;
+                    productReference = 800101 /* OmniGPS.app */;
+                    productType = "com.apple.product-type.application";
+                };
+                /* End PBXNativeTarget */
+
+                /* Begin PBXProject */
+                900101 /* Project object */ = {
+                    isa = PBXProject;
+                    attributes = {LastUpgradeCheck = 1500; };
+                    buildConfigurationList = 600102 /* Build configuration list for PBXProject "OmniGPS" */;
+                    compatibilityVersion = "Xcode 14.0";
+                    developmentRegion = en;
+                    hasScannedForEncodings = 0;
+                    knownRegions = (en, Base);
+                    mainGroup = 400101 /* CustomGroup */;
+                    productRefGroup = 400101 /* CustomGroup */;
+                    projectDirPath = "";
+                    projectRoot = "";
+                    targets = (500101 /* OmniGPS */);
+                };
+                /* End PBXProject */
+
+                /* Begin PBXSourcesBuildPhase */
+                700101 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (100101 /* main.m in Sources */, 100102 /* AppDelegate.m in Sources */, 100103 /* ViewController.m in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+                /* End PBXSourcesBuildPhase */
+
+                /* Begin XCBuildConfiguration */
+                600103 /* Debug Target */ = {
+                    isa = XCBuildConfiguration;
+                    buildSettings = {
+                        INFOPLIST_FILE = Resources/Info.plist;
+                        PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp;
+                        PRODUCT_NAME = OmniGPS;
+                        CODE_SIGNING_ALLOWED = NO;
+                        DONT_CODE_SIGN = YES;
+                        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                    };
+                    name = Debug;
+                };
+                600104 /* Release Target */ = {
+                    isa = XCBuildConfiguration;
+                    buildSettings = {
+                        INFOPLIST_FILE = Resources/Info.plist;
+                        PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp;
+                        PRODUCT_NAME = OmniGPS;
+                        CODE_SIGNING_ALLOWED = NO;
+                        DONT_CODE_SIGN = YES;
+                        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+                    };
+                    name = Release;
+                };
+                600105 /* Debug Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Debug; };
+                600106 /* Release Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Release; };
+                /* End XCBuildConfiguration */
+
+                /* Begin XCConfigurationList */
+                600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */ = {isa = XCConfigurationList; buildConfigurations = (600103 /* Debug Target */, 600104 /* Release Target */); defaultConfigurationName = Release; defaultConfigurationIsVisible = 0; };
+                600102 /* Build configuration list for PBXProject "OmniGPS" */ = {isa = XCConfigurationList; buildConfigurations = (600105 /* Debug Project */, 600106 /* Release Project */); defaultConfigurationName = Release; defaultConfigurationIsVisible = 0; };
+                /* End XCConfigurationList */
+            };
+            rootObject = 900101 /* Project object */;
+        }
+        EOF
+
+    # 🚀 TUYỆT CHIÊU 2: Chạy lệnh Xcodebuild Archive chính chủ Apple để đóng gói ứng dụng sạch sẽ
+    - name: Build and Archive App via Xcode
       run: |
-        # Biên dịch ứng dụng độc lập
-        make package FINALPACKAGE=1 THEOS=/Users/runner/theos
-        
-        # Đóng gói Payload thành cấu trúc IPA chuẩn cho TrollStore
+        xcodebuild archive \
+          -project OmniGPS.xcodeproj \
+          -scheme OmniGPS \
+          -configuration Release \
+          -archivePath ./build/OmniGPS.xcarchive \
+          -sdk iphoneos \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO
+
+    # 🚀 TUYỆT CHIÊU 3: Nhúng file quyền đặc biệt Entitlements của TrollStore trực tiếp vào thành phẩm
+    - name: Inject TrollStore Entitlements & Package IPA
+      run: |
         mkdir -p Payload
-        cp -r .theos/obj/OmniGPS.app Payload/
-        zip -r OmniGPS_TrollStore.ipa Payload
+        cp -r ./build/OmniGPS.xcarchive/Products/Applications/OmniGPS.app Payload/
+        
+        # Sử dụng trình ký mặc định của macOS để ép file Entitlements cho TrollStore công nhận quyền root
+        codesign --force --sign - --entitlements Resources/Entitlements.plist Payload/OmniGPS.app
+        
+        # Nén thành file .ipa hoàn chỉnh
+        zip -r OmniGPS_Xcode_TrollStore.ipa Payload
 
     - name: Upload Finished IPA
-      uses: actions/upload-artifact@v4
-      with:
-        name: OmniGPS-TrollStore-Edition
-        path: OmniGPS_TrollStore.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmniGPS-Xcode-Edition
+          path: OmniGPS_Xcode_TrollStore.ipa
