@@ -1,6 +1,8 @@
 name: OmniGPS
+# 🚀 FIX CHÍ MẠNG: Ép cấu trúc dự án xuất ra định dạng tương thích chính xác với Xcode 15 trên máy ảo
 options:
   bundleIdPrefix: com.omni
+  xcodeVersion: "15.0"
 targets:
   OmniGPS:
     type: application
@@ -18,5 +20,4 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         DONT_CODE_SIGN: YES
         INFOPLIST_FILE: Resources/Info.plist
-        # Nạp trực tiếp 3 Framework lõi bẻ khóa định vị và đồ họa hệ thống
         OTHER_LDFLAGS: -framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation
