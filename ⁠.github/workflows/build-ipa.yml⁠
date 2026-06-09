@@ -2,7 +2,8 @@ name: Build TrollStore GPS IPA
 
 on:
   push:
-    branches: [ main, master ]
+    # 🚀 TỐI ƯU CHÍ MẠNG: Cho phép tự động chạy Actions trên bất kỳ nhánh nào bạn đang có
+    branches: [ "*" ]
   workflow_dispatch:
 
 jobs:
@@ -13,7 +14,6 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # GIẢI PHÁP TỐI ƯU: Tự clone Theos thủ công để bỏ qua bước check API bị lỗi
     - name: Set up Theos Environment
       run: |
         git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
