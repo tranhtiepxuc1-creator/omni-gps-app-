@@ -13,13 +13,13 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # ÉP LÀM SẠCH: Xóa tận gốc toàn bộ tệp cũ và tắt tính năng lưu cache của XcodeGen
+    # FIX CHÍ MẠNG LỆNH CHẠY: Bỏ đối số thừa để xcodegen chạy lệnh gốc tiêu chuẩn
     - name: Generate Xcode Project using XcodeGen
       run: |
         brew install xcodegen
         rm -rf OmniGPS.xcodeproj
         rm -rf ~/.xcodegen
-        xcodegen generate --use-cache no
+        xcodegen generate
 
     - name: Build and Archive App via Xcode
       run: |
