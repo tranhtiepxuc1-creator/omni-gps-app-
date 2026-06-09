@@ -1,0 +1,43 @@
+name: Build TrollStore GPS IPA
+
+on:
+  push:
+    # 🚀 TỐI ƯU CHÍ MẠNG: Cho phép tự động chạy Actions trên bất kỳ nhánh nào bạn đang có
+    branches: [ "*" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Theos Environment
+      run: |
+        git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
+        echo "THEOS=/Users/runner/theos" >> $GITHUB_ENV
+
+    - name: Download iOS SDK
+      run: |
+        mkdir -p /Users/runner/theos/sdks
+        curl -L https://github.com/xybp888/iOS-SDKs/raw/master/iPhoneOS16.5.sdk.tar.xz -o iPhoneOS16.5.sdk.tar.xz
+        tar -xf iPhoneOS16.5.sdk.tar.xz -C /Users/runner/theos/sdks/
+        rm iPhoneOS16.5.sdk.tar.xz
+
+    - name: Compile Application to IPA
+      run: |
+        # Biên dịch ứng dụng độc lập TrollStore
+        make package FINALPACKAGE=1 THEOS=/Users/runner/theos
+        
+        # Đóng gói cấu hình thành tệp tin .ipa tiêu chuẩn
+        mkdir -p Payload
+        cp -r .theos/obj/OmniGPS.app Payload/
+        zip -r OmniGPS_TrollStore.ipa Payload
+
+    - name: Upload Finished IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: OmniGPS-TrollStore-Edition
+        path: OmniGPS_TrollStore.ipa
