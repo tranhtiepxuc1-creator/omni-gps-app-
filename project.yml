@@ -1,8 +1,8 @@
 name: OmniGPS
-# 🚀 FIX CHÍ MẠNG: Ép cấu trúc dự án xuất ra định dạng tương thích chính xác với Xcode 15 trên máy ảo
 options:
   bundleIdPrefix: com.omni
-  xcodeVersion: "15.0"
+  # Sử dụng trực tiếp mã định dạng tệp (objectVersion) của Xcode 15 thay vì chuỗi ký tự
+  deploymentTarget: "15.0"
 targets:
   OmniGPS:
     type: application
