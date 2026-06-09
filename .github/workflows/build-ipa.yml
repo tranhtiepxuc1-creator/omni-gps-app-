@@ -18,10 +18,11 @@ jobs:
         git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
         echo "THEOS=/Users/runner/theos" >> $GITHUB_ENV
 
-    # FIX CHÍ MẠNG: Tải và cài đặt công cụ ký ldid chuẩn cho máy Mac ảo
+    # FIX CHÍ MẠNG LẦN CUỐI: Tải ldid chuẩn từ Procursus chính chủ cho macOS arm64
     - name: Setup ldid Code Sign Tool
       run: |
-        curl -L https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macos_arm64 -o /Users/runner/theos/bin/ldid
+        mkdir -p /Users/runner/theos/bin
+        curl -L "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macos_arm64" -o /Users/runner/theos/bin/ldid
         chmod +x /Users/runner/theos/bin/ldid
         echo "/Users/runner/theos/bin" >> $GITHUB_PATH
 
@@ -35,7 +36,7 @@ jobs:
 
     - name: Compile Application to IPA
       run: |
-        # Biên dịch và dùng ldid ký duyệt đặc quyền Entitlements
+        # Biên dịch ứng dụng độc lập
         make package FINALPACKAGE=1 THEOS=/Users/runner/theos
         
         # Đóng gói Payload thành cấu trúc IPA chuẩn cho TrollStore
