@@ -13,12 +13,12 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
+    # GIẢI PHÁP TỐI ƯU: Tự clone Theos thủ công để bỏ qua bước check API bị lỗi
     - name: Set up Theos Environment
       run: |
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+        git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
         echo "THEOS=/Users/runner/theos" >> $GITHUB_ENV
 
-    # SỬA LỖI CHÍ MẠNG: Đổi sang kho SDK uy tín, tự động kiểm tra và giải nén chuẩn Linux
     - name: Download iOS SDK
       run: |
         mkdir -p /Users/runner/theos/sdks
@@ -28,10 +28,10 @@ jobs:
 
     - name: Compile Application to IPA
       run: |
-        # Biên dịch ứng dụng độc lập
+        # Biên dịch ứng dụng độc lập TrollStore
         make package FINALPACKAGE=1 THEOS=/Users/runner/theos
         
-        # Đóng gói thủ công cấu trúc tệp tin .ipa tiêu chuẩn iOS
+        # Đóng gói cấu hình thành tệp tin .ipa tiêu chuẩn
         mkdir -p Payload
         cp -r .theos/obj/OmniGPS.app Payload/
         zip -r OmniGPS_TrollStore.ipa Payload
