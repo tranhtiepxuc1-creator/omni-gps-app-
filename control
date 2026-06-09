@@ -1,0 +1,9 @@
+Package: com.omni.gpsapp
+Name: Omni GPS TrollStore
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Ứng dụng Fake GPS toàn hệ thống dành cho TrollStore
+Maintainer: Võ Minh Đức
+Author: Võ Minh Đức
+Section: Applications
