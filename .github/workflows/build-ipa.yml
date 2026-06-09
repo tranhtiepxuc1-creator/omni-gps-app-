@@ -13,6 +13,7 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
+    # CẬP NHẬT CHÍ MẠNG: Khai báo nạp trực tiếp Framework hệ thống UIKit cho dự án Xcode ảo
     - name: Generate Xcode Project Struct
       run: |
         mkdir -p OmniGPS.xcodeproj
@@ -35,8 +36,11 @@ jobs:
                 500101 /* OmniGPS */ = {isa = PBXNativeTarget; buildConfigurationList = 600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */; buildPhases = (700101 /* Sources */, 300101 /* Frameworks */); buildRules = (); dependencies = (); name = OmniGPS; productName = OmniGPS; productReference = 800101 /* OmniGPS.app */; productType = "com.apple.product-type.application"; };
                 900101 /* Project object */ = {isa = PBXProject; attributes = {LastUpgradeCheck = 1500; }; buildConfigurationList = 600102 /* Build configuration list for PBXProject "OmniGPS" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 400101 /* CustomGroup */; productRefGroup = 400101 /* CustomGroup */; projectDirPath = ""; projectRoot = ""; targets = (500101 /* OmniGPS */); };
                 700101 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (100101 /* main.m in Sources */, 100102 /* AppDelegate.m in Sources */, 100103 /* ViewController.m in Sources */); runOnlyForDeploymentPostprocessing = 0; };
-                600103 /* Debug Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; }; name = Debug; };
-                600104 /* Release Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; }; name = Release; };
+                
+                # SỬA LỖI LINKER ĐỒ HỌA: Ép Xcode nhận diện thư viện đồ họa hệ thống khi biên dịch bản Release
+                600103 /* Debug Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; OTHER_LDFLAGS = "-framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation"; }; name = Debug; };
+                600104 /* Release Target */ = {isa = XCBuildConfiguration; buildSettings = {INFOPLIST_FILE = Resources/Info.plist; PRODUCT_BUNDLE_IDENTIFIER = com.omni.gpsapp; PRODUCT_NAME = OmniGPS; CODE_SIGNING_ALLOWED = NO; DONT_CODE_SIGN = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; OTHER_LDFLAGS = "-framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation"; }; name = Release; };
+                
                 600105 /* Debug Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Debug; };
                 600106 /* Release Project */ = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; }; name = Release; };
                 600101 /* Build configuration list for PBXNativeTarget "OmniGPS" */ = {isa = XCConfigurationList; buildConfigurations = (600103 /* Debug Target */, 600104 /* Release Target */); defaultConfigurationName = Release; defaultConfigurationIsVisible = 0; };
@@ -64,7 +68,6 @@ jobs:
         codesign --force --sign - --entitlements Resources/Entitlements.plist Payload/OmniGPS.app
         zip -r OmniGPS_Xcode_TrollStore.ipa Payload
 
-    # ĐÃ FIX THỤT LỀ: Đưa các dòng về đúng vị trí thẳng hàng chuẩn cấu trúc YAML
     - name: Upload Finished IPA
       uses: actions/upload-artifact@v4
       with:
