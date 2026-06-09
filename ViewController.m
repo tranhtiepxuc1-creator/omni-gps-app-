@@ -1,5 +1,6 @@
 #import "ViewController.h"
 #import <CoreLocation/CoreLocation.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @interface ViewController () {
     UIButton *btnSelectFile;
@@ -13,7 +14,7 @@
     BOOL isPlaying;
     dispatch_queue_t geoQueue;
     
-    NSString *systemCachePath; // Đường dẫn file cache định vị hệ thống iOS
+    NSString *systemCachePath;
 }
 @end
 
@@ -25,11 +26,9 @@
     
     gpxPoints = [[NSMutableArray alloc] init];
     geoQueue = dispatch_queue_create("com.omni.app.queue", DISPATCH_QUEUE_SERIAL);
-    
-    // Khai báo đường dẫn lưu tọa độ ảo đè thẳng vào file hệ thống của TrollStore
     systemCachePath = @"/var/mobile/Library/Caches/com.apple.locationd/Simulation.plist";
 
-    // --- TẠO GIAO DIỆN APP ĐỘC LẬP ---
+    // --- GIAO DIỆN ĐIỀU KHIỂN ---
     UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 60, self.view.frame.size.width - 40, 40)];
     titleLabel.text = @"OMNI GPS - TROLLSTORE SYSTEM";
     titleLabel.textColor = [UIColor colorWithRed:0.0 green:0.75 blue:1.0 alpha:1.0];
@@ -80,22 +79,37 @@
     lblSpeedText.text = [NSString stringWithFormat:@"Tốc độ di chuyển: %.1f km/h", sender.value];
 }
 
+// 🌐 SỬA LỖI MỞ FILE PICKER: Chỉ định rõ loại file định dạng XML/Text để hệ thống iOS mở ngay lập tức
 - (void)openFilePicker {
-    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeData, UTTypeText] asCopy:YES];
-    picker.delegate = self;
-    [self presentViewController:picker animated:YES completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Khai báo mảng các định dạng file được phép đọc bao gồm XML (GPX bản chất là cấu trúc XML) và Json
+        NSArray *types = @[UTTypeXML, UTTypeJSON, UTTypePlainText, UTTypeData];
+        
+        UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:types asCopy:YES];
+        picker.delegate = self;
+        picker.modalPresentationStyle = UIModalPresentationFormSheet;
+        
+        [self presentViewController:picker animated:YES completion:nil];
+    });
 }
 
+// XỬ LÝ ĐỌC FILE KHI NGƯỜI DÙNG CHỌN XONG
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     NSURL *url = urls.firstObject;
     if (!url) return;
     
-    NSString *content = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:nil];
-    if (content) {
+    // Yêu cầu quyền đọc file tạm từ iOS
+    [url startAccessingSecurityScopedResource];
+    
+    NSError *error = nil;
+    NSString *content = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
+    [url stopAccessingSecurityScopedResource];
+    
+    if (content && !error) {
         [gpxPoints removeAllObjects];
         currentPointIndex = 0;
         
-        // Trích xuất tọa độ Lat/Lon chuẩn WGS-84 từ file GPX tĩnh
+        // Quét tìm tọa độ lat/lon từ file hành trình gpx
         NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"lat=\"([^\"]+)\" lon=\"([^\"]+)\"" options:0 error:nil];
         NSArray *matches = [regex matchesInString:content options:0 range:NSMakeRange(0, content.length)];
         
@@ -106,28 +120,37 @@
         }
         
         if (gpxPoints.count > 0) {
-            lblStatus.text = [NSString stringWithFormat:@"📁 Đã nạp thành công %lu điểm!", (unsigned long)gpxPoints.count];
-            lblStatus.textColor = [UIColor systemGreenColor];
-            btnPlayPause.backgroundColor = [UIColor systemGreenColor];
-            btnPlayPause.enabled = YES;
-            
-            // ÉP TỌA ĐỘ ĐIỂM ĐẦU TOÀN MÁY NGAY KHI NẠP FILE
-            [self writeLocationToSystemLat:[gpxPoints[0][@"lat"] doubleValue] lon:[gpxPoints[0][@"lon"] doubleValue]];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self->lblStatus.text = [NSString stringWithFormat:@"📁 Đã nạp thành công %lu điểm!", (unsigned long)self->gpxPoints.count];
+                self->lblStatus.textColor = [UIColor systemGreenColor];
+                self->btnPlayPause.backgroundColor = [UIColor systemGreenColor];
+                self->btnPlayPause.enabled = YES;
+                
+                // Đè vị trí điểm đầu tiên lên hệ thống máy ngay khi nạp file thành công
+                [self writeLocationToSystemLat:[self->gpxPoints[0][@"lat"] doubleValue] lon:[self->gpxPoints[0][@"lon"] doubleValue]];
+            });
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self->lblStatus.text = @"❌ Không tìm thấy tọa độ lat/lon hợp lệ!";
+                self->lblStatus.textColor = [UIColor systemRedColor];
+            });
         }
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->lblStatus.text = @"❌ Lỗi đọc nội dung tệp tin!";
+            self->lblStatus.textColor = [UIColor systemRedColor];
+        });
     }
 }
 
-// 🌐 SỨC MẠNH TROLLSTORE: Ghi trực tiếp tọa độ giả lập đè lên file cấu hình dịch vụ locationd của hệ thống iOS
 - (void)writeLocationToSystemLat:(double)lat lon:(double)lon {
     NSDictionary *simulationPlist = @{
         @"SimulationType": @(1),
         @"SimulatedLatitude": @(lat),
         @"SimulatedLongitude": @(lon)
     };
-    // Ép ghi file hệ thống không cần qua Sandbox nhờ quyền đặc biệt của TrollStore
     [simulationPlist writeToFile:systemCachePath atomically:YES];
     
-    // Ra lệnh thông báo cho dịch vụ hệ thống cập nhật tọa độ ảo tức thì
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.apple.locationd.simulation"), NULL, NULL, YES);
@@ -147,23 +170,26 @@
     }
 }
 
-// VÒNG LẶP ĐIỀU KHIỂN THỜI GIAN CHẠY NGẦM ĐỂ TẠO DI CHUYỂN ĐỘNG TRÊN TOÀN CHIẾC IPHONE
 - (void)startSimulationLoop {
     if (!isPlaying || gpxPoints.count == 0) return;
     
     dispatch_async(geoQueue, ^{
-        if (currentPointIndex >= gpxPoints.count) currentPointIndex = 0;
+        if (self->currentPointIndex >= self->gpxPoints.count) self->currentPointIndex = 0;
         
-        NSDictionary *point = gpxPoints[currentPointIndex];
+        NSDictionary *point = self->gpxPoints[self->currentPointIndex];
         [self writeLocationToSystemLat:[point[@"lat"] doubleValue] lon:[point[@"lon"] doubleValue]];
         
-        currentPointIndex++;
+        self->currentPointIndex++;
         
-        // Tính toán khoảng thời gian delay dựa theo thanh gạt km/h
-        double interval = (3.6 / sliderSpeed.value);
+        __block double currentSpeed = 5.0;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            currentSpeed = self->sliderSpeed.value;
+        });
+        
+        double interval = (3.6 / currentSpeed);
         if (interval < 1.0) interval = 1.0;
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)), geoQueue, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)), self->geoQueue, ^{
             [self startSimulationLoop];
         });
     });
