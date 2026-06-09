@@ -7,20 +7,20 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    # 🚀 CHIÊU ĐỘC: Nâng cấp máy ảo lên macOS 15 (Chạy Xcode 16 chính chủ Apple)
+    runs-on: macos-15
 
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    # FIX CHÍ MẠNG LỆNH CHẠY: Bỏ đối số thừa để xcodegen chạy lệnh gốc tiêu chuẩn
+    # Chạy XcodeGen để đúc file dự án theo đúng chuẩn Xcode 16 (Format 77)
     - name: Generate Xcode Project using XcodeGen
       run: |
         brew install xcodegen
-        rm -rf OmniGPS.xcodeproj
-        rm -rf ~/.xcodegen
         xcodegen generate
 
+    # Biên dịch Archive bằng Xcode 16 - khớp hoàn toàn mọi điều kiện
     - name: Build and Archive App via Xcode
       run: |
         xcodebuild archive \
@@ -32,6 +32,7 @@ jobs:
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
 
+    # Bơm đặc quyền hệ thống TrollStore và đóng gói
     - name: Inject TrollStore Entitlements & Package IPA
       run: |
         mkdir -p Payload
