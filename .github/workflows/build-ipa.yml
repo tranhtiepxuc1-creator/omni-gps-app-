@@ -18,6 +18,13 @@ jobs:
         git clone --recursive https://github.com/theos/theos.git /Users/runner/theos
         echo "THEOS=/Users/runner/theos" >> $GITHUB_ENV
 
+    # FIX CHÍ MẠNG: Tải và cài đặt công cụ ký ldid chuẩn cho máy Mac ảo
+    - name: Setup ldid Code Sign Tool
+      run: |
+        curl -L https://github.com/theos/ldid/releases/download/v2.1.5/ldid_macos_arm64 -o /Users/runner/theos/bin/ldid
+        chmod +x /Users/runner/theos/bin/ldid
+        echo "/Users/runner/theos/bin" >> $GITHUB_PATH
+
     - name: Download iOS SDK
       run: |
         mkdir -p /Users/runner/theos/sdks
@@ -28,7 +35,10 @@ jobs:
 
     - name: Compile Application to IPA
       run: |
+        # Biên dịch và dùng ldid ký duyệt đặc quyền Entitlements
         make package FINALPACKAGE=1 THEOS=/Users/runner/theos
+        
+        # Đóng gói Payload thành cấu trúc IPA chuẩn cho TrollStore
         mkdir -p Payload
         cp -r .theos/obj/OmniGPS.app Payload/
         zip -r OmniGPS_TrollStore.ipa Payload
