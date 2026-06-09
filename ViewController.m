@@ -2,7 +2,8 @@
 #import <CoreLocation/CoreLocation.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
-@interface ViewController () {
+// Định nghĩa rõ ràng lớp ViewController tuân thủ giao thức chọn file của Apple
+@interface ViewController () <UIDocumentPickerDelegate> {
     UIButton *btnSelectFile;
     UIButton *btnPlayPause;
     UILabel *lblStatus;
@@ -79,28 +80,25 @@
     lblSpeedText.text = [NSString stringWithFormat:@"Tốc độ di chuyển: %.1f km/h", sender.value];
 }
 
-// 🌐 SỬA LỖI MỞ FILE PICKER: Chỉ định rõ loại file định dạng XML/Text để hệ thống iOS mở ngay lập tức
 - (void)openFilePicker {
     dispatch_async(dispatch_get_main_queue(), ^{
-        // Khai báo mảng các định dạng file được phép đọc bao gồm XML (GPX bản chất là cấu trúc XML) và Json
         NSArray *types = @[UTTypeXML, UTTypeJSON, UTTypePlainText, UTTypeData];
-        
         UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:types asCopy:YES];
-        picker.delegate = self;
-        picker.modalPresentationStyle = UIModalPresentationFormSheet;
         
+        // 🚀 ĐÃ VÁ LỖI CHÍ MẠNG: Ủy thác quyền tiếp nhận tệp dữ liệu về cho hàm documentPicker xử lý bên dưới
+        picker.delegate = self;
+        
+        picker.modalPresentationStyle = UIModalPresentationFormSheet;
         [self presentViewController:picker animated:YES completion:nil];
     });
 }
 
-// XỬ LÝ ĐỌC FILE KHI NGƯỜI DÙNG CHỌN XONG
+// HÀM TIẾP NHẬN DỮ LIỆU FILE KHI ĐỨC NHẤP CHỌN TRÊN VIDEO
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     NSURL *url = urls.firstObject;
     if (!url) return;
     
-    // Yêu cầu quyền đọc file tạm từ iOS
     [url startAccessingSecurityScopedResource];
-    
     NSError *error = nil;
     NSString *content = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
     [url stopAccessingSecurityScopedResource];
@@ -109,35 +107,41 @@
         [gpxPoints removeAllObjects];
         currentPointIndex = 0;
         
-        // Quét tìm tọa độ lat/lon từ file hành trình gpx
-        NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"lat=\"([^\"]+)\" lon=\"([^\"]+)\"" options:0 error:nil];
-        NSArray *matches = [regex matchesInString:content options:0 range:NSMakeRange(0, content.length)];
+        // Quét tìm chuỗi tọa độ bằng biểu thức chính quy cải tiến
+        NSRegularExpression *latRegex = [NSRegularExpression regularExpressionWithPattern:@"lat=['\"]([^'\"]+)['\"]" options:0 error:nil];
+        NSRegularExpression *lonRegex = [NSRegularExpression regularExpressionWithPattern:@"lon=['\"]([^'\"]+)['\"]" options:0 error:nil];
         
-        for (NSTextCheckingResult *match in matches) {
-            double lat = [[content substringWithRange:[match rangeAtIndex:1]] doubleValue];
-            double lon = [[content substringWithRange:[match rangeAtIndex:2]] doubleValue];
-            [gpxPoints addObject:@{@"lat": @(lat), @"lon": @(lon)}];
+        NSRegularExpression *pointBlockRegex = [NSRegularExpression regularExpressionWithPattern:@"<(trkpt|wpt|pnt)[^>]+>" options:0 error:nil];
+        NSArray *blocks = [pointBlockRegex matchesInString:content options:0 range:NSMakeRange(0, content.length)];
+        
+        for (NSTextCheckingResult *blockMatch in blocks) {
+            NSString *blockStr = [content substringWithRange:blockMatch.range];
+            NSTextCheckingResult *latMatch = [latRegex firstMatchInString:blockStr options:0 range:NSMakeRange(0, blockStr.length)];
+            NSTextCheckingResult *lonMatch = [lonRegex firstMatchInString:blockStr options:0 range:NSMakeRange(0, blockStr.length)];
+            
+            if (latMatch && lonMatch) {
+                double lat = [[blockStr substringWithRange:[latMatch rangeAtIndex:1]] doubleValue];
+                double lon = [[blockStr substringWithRange:[lonMatch rangeAtIndex:1]] doubleValue];
+                [gpxPoints addObject:@{@"lat": @(lat), @"lon": @(lon)}];
+            }
         }
         
-        if (gpxPoints.count > 0) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self->lblStatus.text = [NSString stringWithFormat:@"📁 Đã nạp thành công %lu điểm!", (unsigned long)self->gpxPoints.count];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (self->gpxPoints.count > 0) {
+                self->lblStatus.text = [NSString stringWithFormat:@"🟢 Đã nạp thành công %lu điểm tọa độ!", (unsigned long)self->gpxPoints.count];
                 self->lblStatus.textColor = [UIColor systemGreenColor];
                 self->btnPlayPause.backgroundColor = [UIColor systemGreenColor];
                 self->btnPlayPause.enabled = YES;
                 
-                // Đè vị trí điểm đầu tiên lên hệ thống máy ngay khi nạp file thành công
                 [self writeLocationToSystemLat:[self->gpxPoints[0][@"lat"] doubleValue] lon:[self->gpxPoints[0][@"lon"] doubleValue]];
-            });
-        } else {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                self->lblStatus.text = @"❌ Không tìm thấy tọa độ lat/lon hợp lệ!";
+            } else {
+                self->lblStatus.text = @"🔴 Lỗi: File GPX không chứa tag tọa độ hợp lệ!";
                 self->lblStatus.textColor = [UIColor systemRedColor];
-            });
-        }
+            }
+        });
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
-            self->lblStatus.text = @"❌ Lỗi đọc nội dung tệp tin!";
+            self->lblStatus.text = @"🔴 Thất bại: Lỗi hệ thống không đọc được file!";
             self->lblStatus.textColor = [UIColor systemRedColor];
         });
     }
