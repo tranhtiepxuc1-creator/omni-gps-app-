@@ -1,8 +1,8 @@
 name: OmniGPS
 options:
   bundleIdPrefix: com.omni
-  # Sử dụng trực tiếp mã định dạng tệp (objectVersion) của Xcode 15 thay vì chuỗi ký tự
-  deploymentTarget: "15.0"
+  # Sử dụng cú pháp ép buộc định dạng file dự án tương thích Xcode 15 (Không cho tự nhảy lên 77)
+  projectFormat: Xcode 15.0
 targets:
   OmniGPS:
     type: application
