@@ -1,0 +1,22 @@
+name: OmniGPS
+options:
+  bundleIdPrefix: com.omni
+targets:
+  OmniGPS:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - main.m
+      - AppDelegate.h
+      - AppDelegate.m
+      - ViewController.h
+      - ViewController.m
+      - Resources
+    settings:
+      base:
+        CODE_SIGNING_ALLOWED: NO
+        DONT_CODE_SIGN: YES
+        INFOPLIST_FILE: Resources/Info.plist
+        # Nạp trực tiếp 3 Framework lõi bẻ khóa định vị và đồ họa hệ thống
+        OTHER_LDFLAGS: -framework UIKit -framework UniformTypeIdentifiers -framework CoreLocation
